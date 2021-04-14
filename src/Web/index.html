@@ -1,0 +1,52 @@
+﻿<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>GitHubCalendar</title>
+    <link href="main.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/jquery.webui-popover/1.2.1/jquery.webui-popover.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.rawgit.com/IonicaBizau/github-calendar/gh-pages/dist/github-calendar.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/jquery.webui-popover/1.2.1/jquery.webui-popover.min.js"></script>
+    <script src="https://cdn.rawgit.com/IonicaBizau/github-calendar/gh-pages/dist/github-calendar.min.js"></script>
+    <script>
+        $(function () {
+            $('#username').keyup(function (event) {
+                if (event.keyCode === 13) {
+                    $('#submit').click();
+                }
+            });
+
+            $('#submit').bind('click', function () {
+                var username = document.getElementById('username').value;
+                GitHubCalendar('.calendar', username);
+                $('#content').css('visibility', 'visible');
+                var url = 'https://github.com/' + username;
+                $('#link').attr('href', url).text(url);
+                $('#more').show();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div id="content" style="visibility: hidden;">
+        <p id="result">
+            <div class="calendar">
+                Loading the data just for you.
+            </div>
+        </p>
+    </div>
+    <div id="container">
+        <input type="text" id="username" placeholder="GitHub username" autofocus />
+        <input type="button" id="submit" value="Show" />
+        <p id="result">
+            <span id="more" hidden>More:</span>
+            <a id="link" href="#"></a>
+        </p>
+    </div>
+</body>
+
+</html>
