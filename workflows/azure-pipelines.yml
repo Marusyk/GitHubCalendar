@@ -6,8 +6,7 @@ pool:
 
 steps:
 
-- task: Cake@2
+- task: Bash@3
   inputs:
-    script: 'build.cake'
-    target: 'Default'
-    verbosity: 'Verbose'
+    targetType: 'inline'
+    script: 'dotnet cake'
