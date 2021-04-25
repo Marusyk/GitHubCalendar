@@ -5,8 +5,9 @@ pool:
   vmImage: macos-latest
 
 steps:
-
 - task: Bash@3
   inputs:
     targetType: 'inline'
-    script: 'dotnet cake'
+    script: |
+      dotnet tool restore
+      dotnet cake
