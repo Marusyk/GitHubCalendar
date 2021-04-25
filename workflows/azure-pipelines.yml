@@ -1,0 +1,13 @@
+trigger:
+- main
+
+pool:
+  vmImage: macos-latest
+
+steps:
+
+- task: Cake@2
+  inputs:
+    script: 'build.cake'
+    target: 'Default'
+    verbosity: 'Verbose'
