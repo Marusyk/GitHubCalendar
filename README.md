@@ -5,13 +5,13 @@
  ![MacOs Build](https://github.com/Marusyk/GitHubCalendar/workflows/MacOs%20Build/badge.svg)
  
 ## Build
-
-On Windows: 
-```powershell
-build.ps1
+ 
+```bash
+dotnet cake
 ```
 
-On Linux/Mac:
+## Deploy 
+
 ```bash
-build.sh
+dotnet cake --target Deploy
 ```
