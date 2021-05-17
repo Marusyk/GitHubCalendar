@@ -1,28 +1,21 @@
 #addin nuget:?package=Cake.Kudu.Client&version=1.0.1
 
-var target = Argument("target", "Default");
+var target = Argument("target", "Test");
 
+var projectPath = "./src/Web.csproj";
 var artifactsDirectory = Directory("./artifacts");
-var project = "./src/Web.csproj";
-var kuduBaseUri = EnvironmentVariable("KUDU_CLIENT_BASEURI");
-var deployUserName  = EnvironmentVariable("KUDU_CLIENT_USERNAME");
-var deployPassword = EnvironmentVariable("KUDU_CLIENT_PASSWORD");
-
-Task("Clean")
-    .Does(() =>
-    {
-        CleanDirectory(artifactsDirectory);
-    });
+var kuduUri = EnvironmentVariable("KUDU_CLIENT_BASEURI");
+var kuduUserName  = EnvironmentVariable("KUDU_CLIENT_USERNAME");
+var kuduPassword = EnvironmentVariable("KUDU_CLIENT_PASSWORD");
 
 Task("Build")
-    .IsDependentOn("Clean")
     .Does(() =>
     {
         var settings = new DotNetCoreBuildSettings
         {
             Configuration = "Release"
         };
-        DotNetCoreBuild("./GitHubCalendar.sln", settings);
+        DotNetCoreBuild(projectPath, settings);
     });
 
 Task("Test")
@@ -32,8 +25,15 @@ Task("Test")
         DotNetCoreTest("./test/Tests.csproj");
     });
 
+Task("Clean")
+    .Does(() =>
+    {
+        CleanDirectory(artifactsDirectory);
+    });
+
 var packageTask = Task("Package")
     .IsDependentOn("Test")
+    .IsDependentOn("Clean")
     .Does(() =>
     {
         GetVersion();
@@ -41,26 +41,22 @@ var packageTask = Task("Package")
         {
             OutputDirectory = artifactsDirectory
         };
-        DotNetCorePublish(project, settings);
+        DotNetCorePublish(projectPath, settings);
     });
 
 Task("Deploy")
-    .WithCriteria(!string.IsNullOrWhiteSpace(deployUserName) && !string.IsNullOrWhiteSpace(deployPassword))
-    .IsDependentOn("Default")
+    .IsDependentOn(packageTask)
+    .WithCriteria(!string.IsNullOrWhiteSpace(kuduUserName) && !string.IsNullOrWhiteSpace(kuduPassword))
     .Does(() =>
     {
-        var kuduClient = KuduClient(kuduBaseUri, deployUserName, deployPassword);
-
+        var kuduClient = KuduClient(kuduUri, kuduUserName, kuduPassword);
         kuduClient.ZipDeployDirectory(artifactsDirectory);
         Information("Deployed");
     });
 
-Task("Default")
-    .IsDependentOn(packageTask);
-
 private void GetVersion()
 {
-    var version = XmlPeek(project, "/Project/PropertyGroup/Version/text()");
+    var version = XmlPeek(projectPath, "/Project/PropertyGroup/Version/text()");
     Information($"Detected version: {version}");
 }
 
