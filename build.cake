@@ -36,7 +36,7 @@ var packageTask = Task("Package")
     .IsDependentOn("Clean")
     .Does(() =>
     {
-        GetVersion();
+        PrintVersion();
         var settings = new DotNetCorePublishSettings
         {
             OutputDirectory = artifactsDirectory
@@ -45,8 +45,8 @@ var packageTask = Task("Package")
     });
 
 Task("Deploy")
-    .IsDependentOn(packageTask)
     .WithCriteria(!string.IsNullOrWhiteSpace(kuduUserName) && !string.IsNullOrWhiteSpace(kuduPassword))
+    .IsDependentOn(packageTask)
     .Does(() =>
     {
         var kuduClient = KuduClient(kuduUri, kuduUserName, kuduPassword);
@@ -54,7 +54,7 @@ Task("Deploy")
         Information("Deployed");
     });
 
-private void GetVersion()
+private void PrintVersion()
 {
     var version = XmlPeek(projectPath, "/Project/PropertyGroup/Version/text()");
     Information($"Detected version: {version}");
