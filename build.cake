@@ -1,12 +1,13 @@
 #addin nuget:?package=Cake.Kudu.Client&version=1.0.1
 
-var target = Argument("target", "Test");
-
-var projectPath = "./src/Web.csproj";
-var artifactsDirectory = Directory("./artifacts");
+var target = Argument("target", "Default");
 var kuduUri = EnvironmentVariable("KUDU_CLIENT_BASEURI");
 var kuduUserName  = EnvironmentVariable("KUDU_CLIENT_USERNAME");
 var kuduPassword = EnvironmentVariable("KUDU_CLIENT_PASSWORD");
+var appUri = EnvironmentVariable("APP_URI");
+
+var projectPath = "./src/Web.csproj";
+var artifactsDirectory = Directory("./artifacts");
 
 Task("Build")
     .Does(() =>
@@ -18,7 +19,7 @@ Task("Build")
         DotNetCoreBuild(projectPath, settings);
     });
 
-Task("Test")
+var testTask = Task("Test")
     .IsDependentOn("Build")
     .Does(() =>
     {
@@ -28,10 +29,10 @@ Task("Test")
 Task("Clean")
     .Does(() =>
     {
-        CleanDirectory(artifactsDirectory);
+        CleanDirectory(artifactsDirectory);   
     });
 
-var packageTask = Task("Package")
+Task("Package")
     .IsDependentOn("Test")
     .IsDependentOn("Clean")
     .Does(() =>
@@ -45,14 +46,17 @@ var packageTask = Task("Package")
     });
 
 Task("Deploy")
+    .IsDependentOn("Package")
     .WithCriteria(!string.IsNullOrWhiteSpace(kuduUserName) && !string.IsNullOrWhiteSpace(kuduPassword))
-    .IsDependentOn(packageTask)
     .Does(() =>
     {
         var kuduClient = KuduClient(kuduUri, kuduUserName, kuduPassword);
         kuduClient.ZipDeployDirectory(artifactsDirectory);
-        Information("Deployed");
+        Information($"Deployed at: {appUri}");
     });
+
+Task("Default")
+    .IsDependentOn(testTask);
 
 private void PrintVersion()
 {
