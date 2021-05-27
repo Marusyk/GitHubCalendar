@@ -4,7 +4,6 @@ var target = Argument("target", "Default");
 var kuduUri = EnvironmentVariable("KUDU_CLIENT_BASEURI");
 var kuduUserName  = EnvironmentVariable("KUDU_CLIENT_USERNAME");
 var kuduPassword = EnvironmentVariable("KUDU_CLIENT_PASSWORD");
-var appUri = EnvironmentVariable("APP_URI");
 
 var projectPath = "./src/Web.csproj";
 var artifactsDirectory = Directory("./artifacts");
@@ -29,30 +28,34 @@ var testTask = Task("Test")
 Task("Clean")
     .Does(() =>
     {
-        CleanDirectory(artifactsDirectory);   
+        CleanDirectory(artifactsDirectory);
     });
 
 Task("Package")
-    .IsDependentOn("Test")
     .IsDependentOn("Clean")
+    .IsDependentOn(testTask)
     .Does(() =>
     {
         PrintVersion();
         var settings = new DotNetCorePublishSettings
         {
-            OutputDirectory = artifactsDirectory
+            OutputDirectory = artifactsDirectory,
+            NoBuild = true
         };
         DotNetCorePublish(projectPath, settings);
     });
 
 Task("Deploy")
+    .WithCriteria(
+        !string.IsNullOrWhiteSpace(kuduUserName) && 
+        !string.IsNullOrWhiteSpace(kuduPassword) &&
+        !string.IsNullOrWhiteSpace(kuduUri))
     .IsDependentOn("Package")
-    .WithCriteria(!string.IsNullOrWhiteSpace(kuduUserName) && !string.IsNullOrWhiteSpace(kuduPassword))
     .Does(() =>
     {
-        var kuduClient = KuduClient(kuduUri, kuduUserName, kuduPassword);
-        kuduClient.ZipDeployDirectory(artifactsDirectory);
-        Information($"Deployed at: {appUri}");
+        var client = KuduClient(kuduUri, kuduUserName, kuduPassword);
+        client.ZipDeployDirectory(artifactsDirectory);
+        Information($"Deployed at: {EnvironmentVariable("APP_URI")}");
     });
 
 Task("Default")
@@ -60,8 +63,7 @@ Task("Default")
 
 private void PrintVersion()
 {
-    var version = XmlPeek(projectPath, "/Project/PropertyGroup/Version/text()");
-    Information($"Detected version: {version}");
+    var vesrion = XmlPeek(projectPath, "/Project/PropertyGroup/Version/text()");
+    Information($"Detected version: {vesrion}");
 }
-
 RunTarget(target);
